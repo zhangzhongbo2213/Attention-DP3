@@ -28,7 +28,7 @@ SAVE_TRACKING_RESULTS_DIR = "./tracking_results"
 API_TOKEN_FOR_GD1_5 = "Your API token"
 PROMPT_TYPE_FOR_VIDEO = "box" # choose from ["point", "box", "mask"]
 BOX_THRESHOLD = 0.2
-IOU_THRESHOLD = 0.8  # 添加IOU阈值参数
+IOU_THRESHOLD = 0.8  # IOU threshold parameter
 
 """
 Step 1: Environment settings and model initialization for SAM 2

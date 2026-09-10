@@ -290,9 +290,9 @@ class AdroitRunner(BaseRunner):
 
     def _build_attn_from_env_seg(self, point_cloud, seg_data, n_points=512, n_channels=3):
         """
-        从环境直接提供的分割数据构建attention。
+        Build attention from environment-provided segmentation data.
         seg_data: (T, H, W, 2) - MuJoCo segmentation data over T timesteps, where each pixel contains [objtype, objid]
-        point_cloud: (T, N_pc, 8) xyzrgbuv，其中 uv 是归一化的 [0, 1]
+        point_cloud: (T, N_pc, 8) xyzrgbuv, where uv is normalized [0, 1]
         """
         T, H, W, _ = seg_data.shape
         T_pc, N_pc, C_pc = point_cloud.shape

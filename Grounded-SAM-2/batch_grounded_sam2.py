@@ -122,7 +122,7 @@ def run_on_image(
         device=device,
     )
 
-    # 若未检测到任何框，直接返回空结果，避免后续 SAM2 断言失败
+    # If no box detected, return empty result to avoid downstream SAM2 assertion failure
     if boxes.numel() == 0:
         return {
             "image_path": img_path,

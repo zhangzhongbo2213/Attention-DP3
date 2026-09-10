@@ -1,17 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 参数：
-#   $1 frames_root (默认 ../3D-Diffusion-Policy/export/adroit_door_frames)
-#   $2 output_root (默认 ../3D-Diffusion-Policy/export_gs2/adroit_door)
-#   $3 text prompt (默认 "door handle. door.")
-#   $4 device (默认 cuda)
-#   $5 api_url (可选, 如果设置则使用API模式)
+# Args: $1 frames_root, $2 output_root, $3 text_prompt, $4 device, $5 api_url
 
 ROOT_DIR="$(cd "$(dirname "$0")/.."; pwd)"
 GS2_DIR="${GS2_DIR:-${ROOT_DIR}/Grounded-SAM-2}"
 
-# 处理相对路径，转换为绝对路径
 if [[ "${1:-}" =~ ^/ ]]; then
   FRAMES_ROOT="${1:-${ROOT_DIR}/3D-Diffusion-Policy/export/adroit_door_frames}"
 else
@@ -28,17 +22,10 @@ TEXT_PROMPT="${3:-door handle. door.}"
 DEVICE="${4:-cuda}"
 API_URL="${5:-}"
 
-echo "[gs2.sh] ROOT_DIR: ${ROOT_DIR}"
-echo "[gs2.sh] GS2_DIR: ${GS2_DIR}"
+echo "[gs2.sh] ROOT_DIR: ${ROOT_DIR}, GS2_DIR: ${GS2_DIR}"
 echo "[gs2.sh] FRAMES_ROOT: ${FRAMES_ROOT}"
 echo "[gs2.sh] OUTPUT_ROOT: ${OUTPUT_ROOT}"
-echo "[gs2.sh] TEXT_PROMPT: ${TEXT_PROMPT}"
-echo "[gs2.sh] DEVICE: ${DEVICE}"
-if [[ -n "${API_URL}" ]]; then
-  echo "[gs2.sh] API_URL: ${API_URL} (API mode)"
-else
-  echo "[gs2.sh] MODE: Local inference"
-fi
+echo "[gs2.sh] TEXT_PROMPT: ${TEXT_PROMPT}, DEVICE: ${DEVICE}"
 
 if [ ! -d "${FRAMES_ROOT}" ]; then
   echo "[ERROR] FRAMES_ROOT does not exist: ${FRAMES_ROOT}"
@@ -51,9 +38,6 @@ if [ ! -d "${GS2_DIR}" ]; then
 fi
 
 cd "${GS2_DIR}"
-echo "[gs2.sh] Changed to: $(pwd)"
-echo "[gs2.sh] Running batch_grounded_sam2.py..."
-
 python batch_grounded_sam2.py \
   --frames_root "${FRAMES_ROOT}" \
   --output_root "${OUTPUT_ROOT}" \

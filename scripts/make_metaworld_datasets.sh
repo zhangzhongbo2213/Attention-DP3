@@ -1,28 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 一键生成 Metaworld 的有 attn 数据。
-# 依赖：
-#   - third_party/Metaworld/gen_demonstration_metaworld.sh （生成专家演示）
-#   - scripts/export_adroit_frames.py （导出帧）
-#   - Grounded-SAM-2 及其权重、配置（gs2.sh）
-#   - scripts/convert_zarr_with_attn3d.sh （生成 attn_3d zarr）
-# 环境变量：
-#   DEVICE (默认 cuda)        : gs2 推理设备
-#   ROOT (默认当前仓库根)
-#   MAX_EP (默认 10)
-#   N_POINTS (默认 512)
-#   GS2_CONDA_ENV (默认 aedp3_vis)
+# Generate Metaworld attention datasets.
+# Env vars: DEVICE, ROOT, MAX_EP, N_POINTS, TASKS, GS2_CONDA_ENV
 
 ROOT="${ROOT:-$(cd "$(dirname "$0")/.."; pwd)}"
 DEVICE="${DEVICE:-cuda}"
 MAX_EP="${MAX_EP:-10}"
 N_POINTS="${N_POINTS:-512}"
-# 旧任务（已有结果）：
-# TASKS="${TASKS:-hammer pick-place window-open window-close sweep sweep-into stick-push stick-pull soccer shelf-place box-close bin-picking disassemble reach pick-place-wall push push-back pick-out-of-hole hand-insert assembly push-wall peg-insert-side}"
-
-# 新一批待生成数据的任务（如需只跑子集，可通过环境变量 TASKS 覆盖）
-# TASKS="${TASKS:-dial-turn door-lock handle-pull handle-pull-side lever-pull reach-wall peg-unplug-side coffee-pull coffee-push}"
 TASKS="${TASKS:-basketball}"
 GS2_DIR="${GS2_DIR:-${ROOT}/Grounded-SAM-2}"
 GS2_CONDA_ENV="${GS2_CONDA_ENV:-aedp3_vis}"
@@ -31,7 +16,7 @@ log() { echo -e "[make_metaworld] $*"; }
 
 gen_demo() {
   local task="$1"
-  log "生成演示: ${task}"
+  log "Generating demos: ${task}"
   pushd "${ROOT}" >/dev/null
   bash "${ROOT}/scripts/gen_demonstration_metaworld.sh" "${task}"
   popd >/dev/null
@@ -41,7 +26,7 @@ export_frames() {
   local task="$1"
   local zarr="${ROOT}/3D-Diffusion-Policy/data/metaworld_${task}_expert.zarr"
   local out_dir="${ROOT}/3D-Diffusion-Policy/export/metaworld_${task}_frames"
-  log "导出帧: ${task} -> ${out_dir}"
+  log "Exporting frames: ${task} -> ${out_dir}"
   python "${ROOT}/scripts/export_adroit_frames.py" \
     --zarr "${zarr}" \
     --out_dir "${out_dir}" \
@@ -52,7 +37,6 @@ gs2_for_task() {
   local task="$1"
   local frames_root="${ROOT}/3D-Diffusion-Policy/export/metaworld_${task}_frames"
   local output_root="${ROOT}/3D-Diffusion-Policy/export_gs2/metaworld_${task}"
-  # Resolve task -> descriptive text prompt (do not simply use the task name)
   task_to_prompt() {
     local t="$1"
     case "${t}" in
@@ -75,7 +59,6 @@ gs2_for_task() {
       assembly) echo "assembly. peg. ring." ;;
       push-wall) echo "a little rectangular prism. wall." ;;
       peg-insert-side) echo "peg. hole." ;;
-      # 新增一批任务的 prompt
       dial-turn) echo "dial. knob." ;;
       door-lock) echo "door. lock." ;;
       handle-pull) echo "handle." ;;
@@ -85,12 +68,12 @@ gs2_for_task() {
       peg-unplug-side) echo "peg. hole." ;;
       coffee-pull) echo "coffee." ;;
       coffee-push) echo "coffee." ;;
-      *) echo "${t}" ;; # fallback: pass through
+      *) echo "${t}" ;;
     esac
   }
   local text_prompt
   text_prompt="$(task_to_prompt "${task}")"
-  log "运行 GS2: ${task} -> ${output_root}"
+  log "Running GS2: ${task} -> ${output_root}"
   local runner=()
   if [[ -n "${GS2_CONDA_ENV:-}" ]]; then
     runner=(conda run -n "${GS2_CONDA_ENV}")
@@ -107,7 +90,7 @@ convert_attn_zarr() {
   local input_zarr="${ROOT}/3D-Diffusion-Policy/data/metaworld_${task}_expert.zarr"
   local json_root="${ROOT}/3D-Diffusion-Policy/export_gs2/metaworld_${task}"
   local output_zarr="${ROOT}/3D-Diffusion-Policy/data/metaworld_${task}_expert_attn3d.zarr"
-  log "生成 attn_3d zarr: ${task} -> ${output_zarr}"
+  log "Generating attn_3d zarr: ${task} -> ${output_zarr}"
   bash "${ROOT}/scripts/convert_zarr_with_attn3d.sh" \
     "${input_zarr}" \
     "${json_root}" \
@@ -117,18 +100,11 @@ convert_attn_zarr() {
 }
 
 main() {
-  log "ROOT=${ROOT}"
-  log "TASKS=${TASKS}"
-  log "MAX_EP=${MAX_EP}, N_POINTS=${N_POINTS}"
+  log "ROOT=${ROOT}, TASKS=${TASKS}, MAX_EP=${MAX_EP}, N_POINTS=${N_POINTS}"
   for task in ${TASKS}; do
     gen_demo "${task}"
-    # export_frames "${task}"
-    # gs2_for_task "${task}"
-    # convert_attn_zarr "${task}"
   done
-  log "全部完成"
+  log "All tasks completed"
 }
 
 main "$@"
-
-

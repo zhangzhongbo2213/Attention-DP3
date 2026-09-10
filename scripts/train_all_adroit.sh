@@ -1,22 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 一次性串行跑完 Adroit 六个实验（attn / no_attn 各三项）。
-# 需在已激活的 aedp3 环境下运行。
-# addition_info 自动设置：
-#   - 带 attn 的任务（adroit_pen/hammer/door）: 1221aedp3
-#   - 不带 attn 的任务（*_no_attn）: 1221dp3
-# exp_name 格式：${task}-${CONFIG_NAME}-${addition_info}（与 train_policy.sh 完全一致）
-# 环境变量可选：
-#   GPU_ID=0                使用的 GPU ID（会设 CUDA_VISIBLE_DEVICES）
-#   SEED=0                  训练种子
-#   CONFIG_NAME=dp3         Hydra 配置名
-#   EXTRA_ARGS=""           额外透传给 train.py（如 training.debug=true）
-#   DATASET_TYPE=standard   数据集类型: standard(标准), no_attn, gs2_attn, env_attn
+# Run Adroit experiments serially.
+# Optional env vars: GPU_ID, SEED, CONFIG_NAME, EXTRA_ARGS, DATASET_TYPE, ATTN_MODE
 
 DEBUG=False
 save_ckpt=True
-# 运行名前缀，可用于区分 wandb run；默认用 exp_name
 RUN_NAME_PREFIX="${RUN_NAME_PREFIX:-}"
 DATASET_TYPE="${DATASET_TYPE:-standard}"
 ATTN_MODE="${ATTN_MODE:-all}"
@@ -27,7 +16,6 @@ SEED="${SEED:-0}"
 CONFIG_NAME="${CONFIG_NAME:-dp3}"
 EXTRA_ARGS="${EXTRA_ARGS:-}"
 
-# 根据 ATTN_MODE 决定运行哪些任务
 if [ "${ATTN_MODE}" = "no_attn" ]; then
     TASKS=(
       adroit_pen_no_attn
@@ -41,7 +29,6 @@ elif [ "${ATTN_MODE}" = "attn" ]; then
       adroit_door
     )
 else
-    # 默认运行所有任务（向后兼容）
     TASKS=(
       adroit_pen_no_attn
       adroit_hammer_no_attn
@@ -61,25 +48,19 @@ else
 fi
 
 cd "${ROOT}/3D-Diffusion-Policy"
-
 export HYDRA_FULL_ERROR=1 
 export CUDA_VISIBLE_DEVICES=${GPU_ID}
 
-# 记录总耗时
 total_start=$(date +%s)
-
 for task in "${TASKS[@]}"; do
   task_start=$(date +%s)
-  # 根据任务名自动设置 addition_info：带 attn 用 1221aedp3，不带 attn 用 1221dp3
   if [[ "${task}" == *_no_attn ]]; then
     addition_info="0109dp3"
   else
     addition_info="0109aedp3"
   fi
   
-  # exp_name 格式与 train_policy.sh 保持一致：${task}-${alg_name}-${addition_info}
   exp_name="${task}-${CONFIG_NAME}-${addition_info}"
-  # run_dir 也加上 RUN_NAME_PREFIX，避免不同前缀实验覆盖
   if [[ -n "${RUN_NAME_PREFIX}" ]]; then
     run_name="${RUN_NAME_PREFIX}_${exp_name}"
     run_dir="data/outputs/${RUN_NAME_PREFIX}_${exp_name}_seed${SEED}"
@@ -88,9 +69,7 @@ for task in "${TASKS[@]}"; do
     run_dir="data/outputs/${exp_name}_seed${SEED}"
   fi
   
-  # 设置数据集路径（根据 task 名计算 base 名称，并区分是否为 no_attn）
   dataset_args=""
-  # strip leading 'adroit_' if present
   base="${task#adroit_}"
   is_no_attn=false
   if [[ "${base}" == *"_no_attn" ]]; then
@@ -105,11 +84,10 @@ for task in "${TASKS[@]}"; do
     dataset_path="data/adroit_${base}_expert_env_attn3d.zarr"
   fi
   if [[ -n "${dataset_path:-}" ]]; then
-    # override existing key task.dataset.zarr_path in Hydra config
     dataset_args="task.dataset.zarr_path=${dataset_path}"
   fi
 
-  log "开始训练: ${task} (exp_name=${exp_name}, gpu_id=${GPU_ID}, seed=${SEED}, addition_info=${addition_info}, dataset_type=${DATASET_TYPE})"
+  log "Starting training: ${task} (exp_name=${exp_name}, gpu_id=${GPU_ID}, seed=${SEED}, addition_info=${addition_info}, dataset_type=${DATASET_TYPE})"
   python train.py --config-name=${CONFIG_NAME}.yaml \
                             task=${task} \
                             hydra.run.dir=${run_dir} \
@@ -124,9 +102,8 @@ for task in "${TASKS[@]}"; do
                             ${dataset_args} \
                             ${EXTRA_ARGS}
   task_end=$(date +%s)
-  log "完成训练: ${task} 用时 $((task_end - task_start)) 秒"
+  log "Training completed: ${task} took $((task_end - task_start)) seconds"
 done
 
 total_end=$(date +%s)
-log "全部任务完成，总耗时 $((total_end - total_start)) 秒"
-
+log "All tasks completed, total time: $((total_end - total_start)) seconds"

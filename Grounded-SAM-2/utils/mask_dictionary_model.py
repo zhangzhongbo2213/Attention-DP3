@@ -22,15 +22,12 @@ class MaskDictionaryModel:
 
             if mask.shape[0] != mask_img.shape[0] or mask.shape[1] != mask_img.shape[1]:
                 raise ValueError("The mask shape should be the same as the mask_img shape.")
-            # mask = mask
             mask_img[mask == True] = final_index
-            # print("label", label)
             name = label
-            box = box # .numpy().tolist()
+            box = box
             new_annotation = ObjectInfo(instance_id = final_index, mask = mask, class_name = name, x1 = box[0], y1 = box[1], x2 = box[2], y2 = box[3])
             anno_2d[final_index] = new_annotation
 
-        # np.save(os.path.join(output_dir, output_file_name), mask_img.numpy().astype(np.uint16))
         self.mask_height = mask_img.shape[0]
         self.mask_width = mask_img.shape[1]
         self.labels = anno_2d
@@ -38,15 +35,14 @@ class MaskDictionaryModel:
     def update_masks(self, tracking_annotation_dict, iou_threshold=0.8, objects_count=0):
         updated_masks = {}
 
-        for seg_obj_id, seg_mask in self.labels.items():  # tracking_masks
+        for seg_obj_id, seg_mask in self.labels.items():
             flag = 0 
             new_mask_copy = ObjectInfo()
             if seg_mask.mask.sum() == 0:
                 continue
             
-            for object_id, object_info in tracking_annotation_dict.labels.items():  # grounded_sam masks
-                iou = self.calculate_iou(seg_mask.mask, object_info.mask)  # tensor, numpy
-                # print("iou", iou)
+            for object_id, object_info in tracking_annotation_dict.labels.items():
+                iou = self.calculate_iou(seg_mask.mask, object_info.mask)
                 if iou > iou_threshold:
                     flag = object_info.instance_id
                     new_mask_copy.mask = seg_mask.mask
@@ -72,17 +68,11 @@ class MaskDictionaryModel:
     
     @staticmethod
     def calculate_iou(mask1, mask2):
-        # Convert masks to float tensors for calculations
         mask1 = mask1.to(torch.float32)
         mask2 = mask2.to(torch.float32)
-        
-        # Calculate intersection and union
         intersection = (mask1 * mask2).sum()
         union = mask1.sum() + mask2.sum() - intersection
-        
-        # Calculate IoU
-        iou = intersection / union
-        return iou
+        return intersection / union
 
 
     def save_empty_mask_and_json(self, mask_data_dir, json_data_dir, image_name_list=None):
@@ -145,24 +135,13 @@ class ObjectInfo:
         return self.instance_id
 
     def update_box(self):
-        # 找到所有非零值的索引
         nonzero_indices = torch.nonzero(self.mask)
-        
-        # 如果没有非零值，返回一个空的边界框
         if nonzero_indices.size(0) == 0:
-            # print("nonzero_indices", nonzero_indices)
             return []
-        
-        # 计算最小和最大索引
         y_min, x_min = torch.min(nonzero_indices, dim=0)[0]
         y_max, x_max = torch.max(nonzero_indices, dim=0)[0]
-        
-        # 创建边界框 [x_min, y_min, x_max, y_max]
-        bbox = [x_min.item(), y_min.item(), x_max.item(), y_max.item()]        
-        self.x1 = bbox[0]
-        self.y1 = bbox[1]
-        self.x2 = bbox[2]
-        self.y2 = bbox[3]
+        self.x1, self.y1 = x_min.item(), y_min.item()
+        self.x2, self.y2 = x_max.item(), y_max.item()
     
     def to_dict(self):
         return {

@@ -49,7 +49,7 @@ grounding_model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id).
 text = "car."
 BOX_THRESHOLD = 0.2
 IOU_THRESHOLD = 0.8
-GROUNDING_MODEL = "GroundingDino-1.6-Pro" # 使用字符串替代枚举值
+GROUNDING_MODEL = "GroundingDino-1.6-Pro" # use string instead of enum value
 
 # `video_dir` a directory of JPEG frames with filenames like `<frame_index>.jpg`  
 video_dir = "notebooks/videos/car"

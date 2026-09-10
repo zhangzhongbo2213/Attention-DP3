@@ -1,19 +1,19 @@
-<div align="center">
+
 
 # Attention-DP3
 
 ### Spatially Object-aware 3D Diffusion Policy via Geometry-aligned Attentional Conditioning
 
-[![Python](https://img.shields.io/badge/Python-3.10-3776AB.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-%E2%89%A52.3.1-EE4C2C.svg)](https://pytorch.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](3D-Diffusion-Policy/LICENSE)
+[Python](https://www.python.org/)
+[PyTorch](https://pytorch.org/)
+[License](3D-Diffusion-Policy/LICENSE)
 
-**Changbo Yan\***, **Zhongbo Zhang\***, **Zaibin Zhang\***, Lijun Wang, **Yifan Wang†**, Huchuan Lu  
-Dalian University of Technology · \* Equal contribution · † Corresponding author
+**Changbo Yan**, **Zhongbo Zhang**, **Zaibin Zhang**, Lijun Wang, **Yifan Wang†**, Huchuan Lu  
+Dalian University of Technology ·  Equal contribution · † Corresponding author
 
-</div>
 
-![Attention-DP3 teaser](assets/teaser.png)
+
+Attention-DP3 teaser
 
 Attention-DP3 makes a 3D diffusion policy aware of the object named by a language goal. It uses Grounding DINO and SAM2 to obtain an open-vocabulary 2D mask, lifts that mask onto the calibrated point cloud, and constructs three geometry-aligned attention fields while preserving the original DP3 diffusion backbone.
 
@@ -91,6 +91,8 @@ python scripts/convert_zarr_with_attn3d.py \
   --n_points 512
 ```
 
+
+
 ## Training and Evaluation
 
 Task configurations live in `3D-Diffusion-Policy/diffusion_policy_3d/config/task/`. Names without `_no_attn` enable the three attention fields; matching `_no_attn` configurations provide DP3 baselines.
@@ -114,10 +116,11 @@ Attn-dp3/
 ├── Grounded-SAM-2/        # language grounding and segmentation
 ├── scripts/               # dataset, attention, training and evaluation pipelines
 ├── third_party/           # benchmark environments and point-cloud dependencies
-├── docs/                  # experiment and implementation notes
 ├── assets/                # README figures from the paper
 └── requirements.txt       # shared Python dependencies
 ```
+
+
 
 ## Citation
 
@@ -129,6 +132,8 @@ Attn-dp3/
   year      = {2026}
 }
 ```
+
+
 
 ## Acknowledgements
 

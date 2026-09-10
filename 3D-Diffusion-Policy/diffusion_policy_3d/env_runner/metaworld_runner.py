@@ -128,7 +128,7 @@ class MetaworldRunner(BaseRunner):
             'bin-picking': 'bin. a little green rectangular prism.',
             'disassemble': 'a ring with handle.',
             'reach': 'red robotic arm.',
-            # 新增任务的prompts
+            # Default fallback
             'pick-place-wall': 'a little red rectangular prism. wall.',
             'push': 'a little rectangular prism.',
             'push-back': 'a little rectangular prism.',
@@ -137,7 +137,7 @@ class MetaworldRunner(BaseRunner):
             'assembly': 'assembly. peg. ring.',
             'push-wall': 'a little rectangular prism. wall.',
             'peg-insert-side': 'peg. hole.',
-            # 新一批任务的 prompts（与 make_metaworld_datasets.sh 保持语义一致）
+            # More task prompts (semantically consistent with make_metaworld_datasets.sh)
             'dial-turn': 'dial. knob.',
             'door-lock': 'door. lock.',
             'handle-pull': 'handle.',
